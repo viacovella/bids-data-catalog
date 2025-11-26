@@ -8,9 +8,27 @@ from pydantic import BaseModel, field_validator
 from typing import List, Optional
 
 from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
+
+from fastapi.templating import Jinja2Templates
+from fastapi.requests import Request
+from fastapi.responses import HTMLResponse
 
 import enum
 
+app = FastAPI()
+
+origins = ["*"] 
+# CORS Middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+templates = Jinja2Templates(directory="templates")
 
 # Database setup
 DATABASE_URL = "sqlite:///./test.db"
@@ -32,6 +50,10 @@ class LicenseType(str, enum.Enum):
     CC_BY = "CC-BY"
     CC0 = "CC0"
     CC_BY_SA = "CC-BY-SA"
+    CC_BY_NC = "CC-BY-NC"
+    PDDL = "PDDL"
+    ODBL = "ODBL"
+    UNKNOWN = "UNKNOWN"
 
 class ModalityType(str, enum.Enum):
     MRI = "MRI"
@@ -39,6 +61,7 @@ class ModalityType(str, enum.Enum):
     MEG = "MEG"
     FMRI = "fMRI"
     DTI = "DTI"
+    UNKNOWN = "UNKNOWN"
 
 # Relationships
 
@@ -146,7 +169,7 @@ class DatasetUpdate(BaseModel):
 
 
 
-app = FastAPI()
+
 
 @app.get("/")
 def read_root():
@@ -166,12 +189,16 @@ def update_dataset(dataset_id: int, dataset: DatasetUpdate, db: Session = Depend
     update_data = dataset.model_dump(exclude_unset=True)
 
     if "modalities" in update_data:
+        print ("Updating modalities...")
         modality_names = update_data.pop("modalities") # Lo togliamo dal dizionario generico e lo prendiamo in mano
         modality_objects = db.query(Modality).filter(Modality.name.in_(modality_names)).all()
         db_dataset.modalities = modality_objects # Aggiorniamo la relazione
+        print (f"New modalities: {db_dataset.modalities}")
 
     for key, value in update_data.items():
+        print (f"Updating {key} to {value}")
         setattr(db_dataset, key, value)
+        print (f"{key} updated.")
 
     db.commit()
     db.refresh(db_dataset)
@@ -186,6 +213,24 @@ def create_dataset(dataset: DatasetCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Dataset with the same name or URI already exists.")
 
     modality_objects = db.query(Modality).filter(Modality.name.in_(dataset.modalities)).all()
+    
+       
+      
+    db_dataset = Dataset(
+        name=dataset.name,
+        description=dataset.description,
+        participants=dataset.participants,
+        license=dataset.license,
+        uri=dataset.uri,
+        modalities=modality_objects 
+    )
+
+    
+    db.add(db_dataset)      
+    db.commit()             
+    db.refresh(db_dataset)  
+
+    return db_dataset
 
 
 @app.delete("/datasets/{dataset_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -196,3 +241,10 @@ def delete_dataset(dataset_id: int, db: Session = Depends(get_db)):
     db.delete(db_dataset)
     db.commit()
     return None 
+
+
+@app.get("/table/", response_class=HTMLResponse)
+def read_datasets_table(request: Request, db: Session = Depends(get_db)):
+    datasets = db.query(Dataset).all()
+    return templates.TemplateResponse(request=request, name='index.html', context={"datasets": datasets})
+
