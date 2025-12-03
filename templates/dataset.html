@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Dettagli Dataset: {{ dataset.name }}</h2>
+<table>
+    <tr>
+        <th>ID</th>
+        <td>{{ dataset.id }}</td>
+    </tr>
+    <tr>
+        <th>Nome</th>
+        <td>{{ dataset.name }}</td>
+    </tr>
+    <tr>
+        <th>Partecipanti</th>
+        <td>{{ dataset.participants }}</td>
+    </tr>
+    <tr>
+        <th>Licenza</th>
+        <td>{{ dataset.license.value }}</td>
+    </tr>
+    <tr>
+        <th>Modalità</th>
+        <td>
+            {% for m in dataset.modalities %}
+            <span style="background: #eee; padding: 2px; border-radius: 4px;">
+                {{ m.name.value }}
+            </span>
+            {% endfor %}
+        </td>
+    </tr>
+    <tr>
+        <th>URI</th>
+        <td>{{ dataset.uri }}</td>
+    </tr>
+</table>
+{% endblock %}

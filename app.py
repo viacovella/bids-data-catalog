@@ -242,9 +242,19 @@ def delete_dataset(dataset_id: int, db: Session = Depends(get_db)):
     db.commit()
     return None 
 
-
+# HTML Endpoints
 @app.get("/table/", response_class=HTMLResponse)
 def read_datasets_table(request: Request, db: Session = Depends(get_db)):
     datasets = db.query(Dataset).all()
     return templates.TemplateResponse(request=request, name='index.html', context={"datasets": datasets})
 
+@app.get("/table/{dataset_id}", response_class=HTMLResponse)
+def read_dataset_table(dataset_id: int, request: Request, db: Session = Depends(get_db)):
+    db_dataset = db.query(Dataset).filter(Dataset.id == dataset_id).first()
+    if not db_dataset:
+        raise HTTPException(status_code=404, detail="Dataset not found")
+    return templates.TemplateResponse(request=request, name='dataset.html', context={"dataset": db_dataset})
+
+@app.get("/about", response_class=HTMLResponse)
+def about_page(request: Request):
+    return templates.TemplateResponse(request=request, name='about.html', context={})
