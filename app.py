@@ -258,6 +258,7 @@ def read_dataset_table(dataset_id: int, request: Request, db: Session = Depends(
 
 @app.get("/about", response_class=HTMLResponse)
 def about_page(request: Request):
+    
     return templates.TemplateResponse(request=request, name='about.html', context={})
 
 @app.get("/search/", response_class=HTMLResponse)
