@@ -1,0 +1,31 @@
+{% for dataset in datasets %}
+<tr>
+    <td>{{ dataset.id }}</td>
+    <td>
+        <a href="/datasets/{{ dataset.id }}">{{ dataset.name }}</a>
+    </td>
+    <td>{{ dataset.description }}</td>
+    <td>{{ dataset.participants }}</td>
+    <td>{{ dataset.license.value }}</td>
+    <td>
+        {% for mod in dataset.modalities %}
+            {{ mod.name.value }}{% if not loop.last %}, {% endif %}
+        {% endfor %}
+    </td>
+    <td>
+        <button 
+            hx-delete="/datasets/{{ dataset.id }}" 
+            hx-confirm="Sicuro?"
+            hx-target="closest tr" 
+            hx-swap="outerHTML">
+            X
+        </button>
+    </td>
+</tr>
+{% endfor %}
+
+{% if not datasets %}
+<tr>
+    <td colspan="7" style="text-align:center">Nessun dataset trovato.</td>
+</tr>
+{% endif %}

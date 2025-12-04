@@ -1,42 +1,29 @@
 {% extends "base.html" %}
+
 {% block content %}
-<table>
+<h2>Lista Dataset</h2>
+
+<input class="form-control" type="search" 
+       name="q" placeholder="Cerca dataset..." 
+       hx-get="/search/" 
+       hx-trigger="keyup changed delay:500ms, search" 
+       hx-target="#search-results" 
+       hx-swap="innerHTML">
+
+<table border="1" style="margin-top: 20px; width: 100%;">
     <thead>
         <tr>
             <th>ID</th>
             <th>Nome</th>
+            <th>Descrizione</th>
             <th>Partecipanti</th>
             <th>Licenza</th>
             <th>Modalità</th>
-            <th>Azioni</th>
+            <th>Azioni</th> 
         </tr>
     </thead>
-    <tbody>
-        {% for d in datasets %}
-        <tr>
-            <td>{{ d.id }}</td>
-            <td><a href="/table/{{ d.id }}">{{ d.name }}</a></td>
-            <td>{{ d.participants }}</td>
-            <td>{{ d.license.value }}</td>
-            <td>
-                {% for m in d.modalities %}
-                <span style="background: #eee; padding: 2px; border-radius: 4px;">
-                    {{ m.name.value }}
-                </span>
-                {% endfor %}
-            </td>
-            <td>
-                <button hx-delete="/datasets/{{ d.id }}"
-                    hx-confirm="Sei sicuro di voler eliminare il dataset {{ d.name }}?" hx-target="closest tr"
-                    hx-swap="outerHTML swap:0.5s">
-                    Elimina
-                </button>
-            </td>
-        </tr>
-        {% endfor %}
-
-
+    <tbody id="search-results">
+        {% include "partials/dataset_rows.html" %}
     </tbody>
 </table>
-
 {% endblock %}

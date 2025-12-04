@@ -1,6 +1,7 @@
 from typing import Optional
 import sqlalchemy
 from sqlalchemy import create_engine
+from sqlalchemy import or_
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from datetime import datetime, timezone
 
@@ -258,3 +259,20 @@ def read_dataset_table(dataset_id: int, request: Request, db: Session = Depends(
 @app.get("/about", response_class=HTMLResponse)
 def about_page(request: Request):
     return templates.TemplateResponse(request=request, name='about.html', context={})
+
+@app.get("/search/", response_class=HTMLResponse)
+def search_datasets(request: Request, q: Optional[str] = None, db: Session = Depends(get_db)):
+    
+    if q:
+        datasets = db.query(Dataset).filter(
+            or_(
+                Dataset.name.like(f"%{q}%"),
+                Dataset.description.like(f"%{q}%")
+            )
+        ).all()
+    else:
+        datasets = db.query(Dataset).all()
+    
+    return templates.TemplateResponse(request = request,
+                                      name='partials/dataset_rows.html',
+                                     context={"datasets": datasets})
